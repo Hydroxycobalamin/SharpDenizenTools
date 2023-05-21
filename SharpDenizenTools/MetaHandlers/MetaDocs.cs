@@ -25,6 +25,12 @@ namespace SharpDenizenTools.MetaHandlers
         /// <summary>The "mechanism" meta type.</summary>
         public static MetaType META_TYPE_MECHANISM = new() { Name = "Mechanism", WebPath = "Mechanisms" };
 
+        /// <summary>The "procedure" meta type.</summary>
+        public static MetaType META_TYPE_PROCEDURE = new() { Name = "Procedure", WebPath = "Procedures" };
+
+        /// <summary>The "task" meta type.</summary>
+        public static MetaType META_TYPE_TASK = new() { Name = "Task", WebPath = "Tasks" };
+
         /// <summary>The "event" meta type.</summary>
         public static MetaType META_TYPE_EVENT = new() { Name = "Event", WebPath = "Events" };
 
@@ -33,6 +39,9 @@ namespace SharpDenizenTools.MetaHandlers
 
         /// <summary>The "language" meta type.</summary>
         public static MetaType META_TYPE_LANGUAGE = new() { Name = "Language", WebPath = "Languages" };
+
+        /// <summary>The "language" meta type.</summary>
+        public static MetaType META_TYPE_SCRIPT = new() { Name = "Script", WebPath = "Scripts" };
 
         /// <summary>The "tag" meta type.</summary>
         public static MetaType META_TYPE_TAG = new() { Name = "Tag", WebPath = "Tags" };
@@ -48,7 +57,7 @@ namespace SharpDenizenTools.MetaHandlers
 
         /// <summary>All meta types.</summary>
         public static MetaType[] META_TYPES = new MetaType[] { META_TYPE_COMMAND, META_TYPE_MECHANISM,
-            META_TYPE_EVENT, META_TYPE_ACTION, META_TYPE_LANGUAGE, META_TYPE_TAG, META_TYPE_GUIDEPAGE };
+            META_TYPE_EVENT, META_TYPE_ACTION, META_TYPE_LANGUAGE, META_TYPE_TAG, META_TYPE_GUIDEPAGE, META_TYPE_PROCEDURE, META_TYPE_TASK, META_TYPE_SCRIPT };
 
         /// <summary>Getters for standard meta object types.</summary>
         public static Dictionary<string, Func<MetaObject>> MetaObjectGetters = new()
@@ -61,7 +70,10 @@ namespace SharpDenizenTools.MetaHandlers
             { "event", () => new MetaEvent() },
             { "action", () => new MetaAction() },
             { "language", () => new MetaLanguage() },
-            { "data", () => new MetaDataValue() }
+            { "data", () => new MetaDataValue() },
+            { "procedure", () => new MetaProcedure() },
+            { "task", () => new MetaTask() },
+            { "script", () => new MetaScript() }
         };
 
         /// <summary>All known commands.</summary>
@@ -69,6 +81,12 @@ namespace SharpDenizenTools.MetaHandlers
 
         /// <summary>All known mechanisms.</summary>
         public Dictionary<string, MetaMechanism> Mechanisms = new(1024);
+
+        /// <summary>All known procedures.</summary>
+        public Dictionary<string, MetaProcedure> Procedures = new(1024);
+
+        /// <summary>All known Tasks.</summary>
+        public Dictionary<string, MetaTask> Tasks = new(1024);
 
         /// <summary>All known tags.</summary>
         public Dictionary<string, MetaTag> Tags = new(2048);
@@ -87,6 +105,9 @@ namespace SharpDenizenTools.MetaHandlers
 
         /// <summary>All known languages.</summary>
         public Dictionary<string, MetaLanguage> Languages = new(512);
+
+        /// <summary>All known scripts.</summary>
+        public Dictionary<string, MetaScript> Scripts = new(512);
 
         /// <summary>All known guide pages.</summary>
         public Dictionary<string, MetaGuidePage> GuidePages = new(512);
@@ -227,6 +248,16 @@ namespace SharpDenizenTools.MetaHandlers
             foreach (MetaGuidePage guidePage in GuidePages.Values)
             {
                 yield return guidePage;
+            }
+            foreach (MetaProcedure procedure in Procedures.Values) 
+            {
+                yield return procedure;
+            }
+            foreach (MetaTask task in Tasks.Values) {
+                yield return task;
+            }
+            foreach (MetaScript script in Scripts.Values) {
+                yield return script;
             }
         }
 

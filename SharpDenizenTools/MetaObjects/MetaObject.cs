@@ -38,7 +38,7 @@ namespace SharpDenizenTools.MetaObjects
         public List<string> Warnings = new();
 
         /// <summary>Required plugin(s) if applicable.</summary>
-        public string Plugin;
+        public string Script;
 
         /// <summary>The file in source code that defined this meta object.</summary>
         public string SourceFile;
@@ -65,7 +65,7 @@ namespace SharpDenizenTools.MetaObjects
                     Warnings.Add(value);
                     return true;
                 case "plugin":
-                    Plugin = value;
+                    Script = value;
                     return true;
                 case "deprecated":
                     Deprecated = value;

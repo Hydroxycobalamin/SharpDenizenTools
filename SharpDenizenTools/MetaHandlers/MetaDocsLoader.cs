@@ -93,6 +93,7 @@ namespace SharpDenizenTools.MetaHandlers
                 try
                 {
                     (int, string, string)[] fullLines = ReadLines(zips[src]);
+                    Console.WriteLine("fired");
                     LoadDataFromLines(docs, src, fullLines);
                 }
                 catch (Exception ex)
@@ -247,7 +248,7 @@ namespace SharpDenizenTools.MetaHandlers
                 {
                     continue;
                 }
-                if (!entry.FullName.EndsWith(".java"))
+                if (!entry.FullName.EndsWith(".dsc"))
                 {
                     continue;
                 }
@@ -258,16 +259,14 @@ namespace SharpDenizenTools.MetaHandlers
         }
 
         /// <summary>Internal call for <see cref="ReadLines(ZipArchive, string)"/>.</summary>
-        public static void SeparateDataLines(List<(int, string, string)> outLines, string fName, IEnumerable<string> inLines)
+        public static void SeparateDataLines(List<(int, string, string)> outLines, string fName, IEnumerable<string> inLines) 
         {
             int lineNum = 0;
-            foreach (string line in inLines)
-            {
+            foreach (string line in inLines) {
                 lineNum++;
                 string trimmed = line.Trim().Replace("\r", "");
-                if (trimmed.StartsWith("//"))
-                {
-                    string actualContent = trimmed.Length == "//".Length ? "" : trimmed["// ".Length..];
+                if (trimmed.StartsWith("##")) {
+                    string actualContent = trimmed.Length == "##".Length ? "" : trimmed["## ".Length..];
                     outLines.Add((lineNum, fName, actualContent));
                 }
             }
@@ -276,8 +275,10 @@ namespace SharpDenizenTools.MetaHandlers
         /// <summary>Load the meta doc data from lines.</summary>
         public static void LoadDataFromLines(MetaDocs docs, string websrc, (int, string, string)[] lines)
         {
+            Console.WriteLine(lines);
             for (int i = 0; i < lines.Length; i++)
             {
+                Console.WriteLine("{i}");
                 (int lineNum, string file, string line) = lines[i];
                 if (line.StartsWith("<--[") && line.EndsWith("]"))
                 {
