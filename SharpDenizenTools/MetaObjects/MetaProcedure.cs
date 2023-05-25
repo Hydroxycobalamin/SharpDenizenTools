@@ -6,57 +6,111 @@ using FreneticUtilities.FreneticExtensions;
 using SharpDenizenTools.MetaHandlers;
 
 namespace SharpDenizenTools.MetaObjects {
-    /// <summary>A documented procedure script.</summary>
+    /// <summary>A documented procedure.</summary>
     public class MetaProcedure : MetaObject {
         /// <summary><see cref="MetaObject.Type"/></summary>
         public override MetaType Type => MetaDocs.META_TYPE_PROCEDURE;
 
         /// <summary><see cref="MetaObject.Name"/></summary>
-        public override string Name => FullName;
+        public override string Name => TagFull;
+
+        /// <summary><see cref="MetaObject.CleanName"/></summary>
+        public override string CleanName => CleanedName;
 
         /// <summary><see cref="MetaObject.AddTo(MetaDocs)"/></summary>
         public override void AddTo(MetaDocs docs) {
-            FullName = $"{MechObject}.{MechName}";
-            NameForms = new string[] { FullName.ToLowerFast(), MechName.ToLowerFast() };
-            HasMultipleNames = true;
             docs.Procedures.Add(CleanName, this);
+            docs.TagBases.Add(CleanName.BeforeAndAfter('.', out string otherBits));
+            foreach (string bit in otherBits.Split('.')) {
+                docs.TagParts.Add(bit);
+            }
+            if (!string.IsNullOrWhiteSpace(Deprecated)) {
+                foreach (string bit in CleanName.Split('.')) {
+                    docs.TagDeprecations[bit] = Deprecated;
+                }
+            }
         }
 
-        /// <summary><see cref="MetaObject.MultiNames"/></summary>
-        public override IEnumerable<string> MultiNames => NameForms;
+        /// <summary>Cleans tag text for searchability.</summary>
+        public static string CleanTag(string text) {
+            StringBuilder cleaned = new(text.Length);
+            bool skipping = false;
+            for (int i = 0; i < text.Length; i++) {
+                char c = text[i];
+                if (c == '<' || c == '>') {
+                    continue;
+                }
+                if (c == '[') {
+                    skipping = true;
+                    continue;
+                }
+                if (c == ']') {
+                    skipping = false;
+                    continue;
+                }
+                if (skipping) {
+                    continue;
+                }
+                cleaned.Append(c);
+            }
+            return cleaned.ToString();
+        }
 
-        /// <summary>Both forms of the mech name (the full name, and the partial name).</summary>
-        public string[] NameForms = Array.Empty<string>();
+        /// <summary>The cleaned (searchable) name.</summary>
+        public string CleanedName;
 
-        /// <summary>The full procedure name (Object.Name).</summary>
-        public string FullName;
+        /// <summary>
+        /// The text before the first dot (with tag cleaning applied).
+        /// Will have capitalized characters.
+        /// </summary>
+        public string BeforeDot;
 
-        /// <summary>The object the procedure applies to.</summary>
-        public string MechObject;
+        /// <summary>The text after the first dot (with tag cleaning applied).</summary>
+        public string AfterDotCleaned;
 
-        /// <summary>The name of the procedure.</summary>
-        public string MechName;
+        /// <summary>The full tag syntax text.</summary>
+        public string TagFull;
 
-        /// <summary>The input type.</summary>
-        public string Input;
+        /// <summary>The return type.</summary>
+        public string Returns;
+
+        /// <summary>The return object type.</summary>
+        public MetaObjectType ReturnType;
+
+        /// <summary>The base tag type (if any).</summary>
+        public MetaObjectType BaseType;
 
         /// <summary>The long-form description.</summary>
         public string Description;
 
+        /// <summary>Whether a parameter is allowed on the first part of this tag.</summary>
+        public bool AllowsParam;
+
+        /// <summary>Whether a parameter is required on the first part of this tag.</summary>
+        public bool RequiresParam;
+
         /// <summary>Manual examples of this tag. One full script per entry.</summary>
         public List<string> Examples = new();
+
+        /// <summary>The parsed <see cref="SingleTag"/> of this tag.</summary>
+        public SingleTag ParsedFormat;
 
         /// <summary><see cref="MetaObject.ApplyValue(MetaDocs, string, string)"/></summary>
         public override bool ApplyValue(MetaDocs docs, string key, string value) {
             switch (key) {
-                case "object":
-                    MechObject = value;
+                case "attribute":
+                    TagFull = value;
+                    CleanedName = CleanTag(TagFull);
+                    if (CleanedName.Contains('.') && !CleanedName.StartsWith("&")) {
+                        BeforeDot = CleanedName.Before('.');
+                    } else {
+                        BeforeDot = "Base";
+                    }
+                    CleanedName = CleanedName.ToLowerFast();
+                    AfterDotCleaned = CleanedName.After('.');
                     return true;
-                case "name":
-                    MechName = value;
-                    return true;
-                case "input":
-                    Input = value;
+                case "returns":
+                    Returns = value;
                     return true;
                 case "description":
                     Description = value;
@@ -71,18 +125,33 @@ namespace SharpDenizenTools.MetaObjects {
 
         /// <summary><see cref="MetaObject.PostCheck(MetaDocs)"/></summary>
         public override void PostCheck(MetaDocs docs) {
-            PostCheckSynonyms(docs, docs.Procedures);
-            Require(docs, MechObject, MechName, Input, Description);
+            PostCheckSynonyms(docs, docs.Tags);
+            Require(docs, TagFull, Returns, Description);
+            ParsedFormat = TagHelper.Parse(TagFull[1..^1], (s) => { docs.LoadErrors.Add($"Failed to parse meta tag '{TagFull}': {s}"); });
+            int firstPartIndex = ParsedFormat.Parts.Count == 1 ? 0 : 1;
+            AllowsParam = ParsedFormat.Parts[firstPartIndex].Parameter != null;
+            RequiresParam = AllowsParam && !ParsedFormat.Parts[firstPartIndex].Parameter.EndsWith(')');
+            if (TagFull.Contains(' ')) {
+                docs.LoadErrors.Add($"Procedure '{TagFull}' contains spaces.");
+            }
+            BaseType = docs.ObjectTypes.GetValueOrDefault(BeforeDot.ToLowerFast());
             PostCheckLinkableText(docs, Description);
         }
 
         /// <summary><see cref="MetaObject.BuildSearchables"/></summary>
         public override void BuildSearchables() {
             base.BuildSearchables();
-            SearchHelper.PerfectMatches.Add(MechName);
-            SearchHelper.Strongs.Add(MechObject);
-            SearchHelper.Decents.Add(Input);
+            string beforeDotLow = BeforeDot.ToLowerFast();
+            if (beforeDotLow.EndsWith("tag")) {
+                SearchHelper.Synonyms.Add(BeforeDot[..^"tag".Length] + '.' + AfterDotCleaned);
+            }
+            if (BaseType != null && beforeDotLow != "elementtag") {
+                foreach (MetaObjectType extendType in BaseType.ExtendedBy) {
+                    SearchHelper.Synonyms.Add(extendType.CleanName + "." + AfterDotCleaned);
+                }
+            }
             SearchHelper.Decents.Add(Description);
+            SearchHelper.Backups.Add(Returns);
         }
     }
 }

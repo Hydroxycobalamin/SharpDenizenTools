@@ -64,7 +64,7 @@ namespace SharpDenizenTools.MetaObjects
                 case "warning":
                     Warnings.Add(value);
                     return true;
-                case "plugin":
+                case "script":
                     Script = value;
                     return true;
                 case "deprecated":
@@ -212,6 +212,18 @@ namespace SharpDenizenTools.MetaObjects
                     else if (type.Equals("language"))
                     {
                         exists = docs.Languages.Keys.Any(s => s.Contains(searchText));
+                    } 
+                    else if (type.Equals("task")) 
+                    {
+                        exists = docs.Tasks.Keys.Any(s => s.Contains(searchText));
+                    } 
+                    else if (type.Equals("procedure")) 
+                    {
+                        exists = docs.FindTag(searchText) != null;
+                    } 
+                    else if (type.Equals("information")) 
+                    {
+                        exists = docs.Informations.Keys.Any(s => s.Contains(searchText));
                     }
                     else if (type.Equals("objecttype"))
                     {

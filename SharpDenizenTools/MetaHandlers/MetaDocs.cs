@@ -43,6 +43,9 @@ namespace SharpDenizenTools.MetaHandlers
         /// <summary>The "language" meta type.</summary>
         public static MetaType META_TYPE_SCRIPT = new() { Name = "Script", WebPath = "Scripts" };
 
+        /// <summary>The "language" meta type.</summary>
+        public static MetaType META_TYPE_INFORMATION = new() { Name = "Information", WebPath = "Informations" };
+
         /// <summary>The "tag" meta type.</summary>
         public static MetaType META_TYPE_TAG = new() { Name = "Tag", WebPath = "Tags" };
 
@@ -57,7 +60,7 @@ namespace SharpDenizenTools.MetaHandlers
 
         /// <summary>All meta types.</summary>
         public static MetaType[] META_TYPES = new MetaType[] { META_TYPE_COMMAND, META_TYPE_MECHANISM,
-            META_TYPE_EVENT, META_TYPE_ACTION, META_TYPE_LANGUAGE, META_TYPE_TAG, META_TYPE_GUIDEPAGE, META_TYPE_PROCEDURE, META_TYPE_TASK, META_TYPE_SCRIPT };
+            META_TYPE_EVENT, META_TYPE_ACTION, META_TYPE_LANGUAGE, META_TYPE_TAG, META_TYPE_GUIDEPAGE, META_TYPE_PROCEDURE, META_TYPE_TASK, META_TYPE_SCRIPT, META_TYPE_INFORMATION };
 
         /// <summary>Getters for standard meta object types.</summary>
         public static Dictionary<string, Func<MetaObject>> MetaObjectGetters = new()
@@ -73,7 +76,8 @@ namespace SharpDenizenTools.MetaHandlers
             { "data", () => new MetaDataValue() },
             { "procedure", () => new MetaProcedure() },
             { "task", () => new MetaTask() },
-            { "script", () => new MetaScript() }
+            { "script", () => new MetaScript() },
+            { "information", () => new MetaInformation() }
         };
 
         /// <summary>All known commands.</summary>
@@ -105,6 +109,9 @@ namespace SharpDenizenTools.MetaHandlers
 
         /// <summary>All known languages.</summary>
         public Dictionary<string, MetaLanguage> Languages = new(512);
+
+        /// <summary>All known languages.</summary>
+        public Dictionary<string, MetaInformation> Informations = new(512);
 
         /// <summary>All known scripts.</summary>
         public Dictionary<string, MetaScript> Scripts = new(512);
@@ -258,6 +265,9 @@ namespace SharpDenizenTools.MetaHandlers
             }
             foreach (MetaScript script in Scripts.Values) {
                 yield return script;
+            }
+            foreach (MetaInformation information in Informations.Values) {
+                yield return information;
             }
         }
 
